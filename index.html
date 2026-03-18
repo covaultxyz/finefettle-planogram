@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fine Fettle — Smoke Shop in a Box Planogram</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#e8e4dc;color:#333;min-height:100vh}
+.topbar{background:#1a1a2e;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.topbar h1{font-size:16px;color:#fff}.topbar .sub{font-size:10px;color:#888}
+.controls{display:flex;gap:6px}
+.btn{padding:5px 12px;border-radius:4px;border:1px solid #555;background:#2a2a4a;color:#ccc;cursor:pointer;font-size:11px}
+.btn:hover{background:#0f3460;border-color:#e94560;color:#fff}
+.btn.pri{background:#e94560;border-color:#e94560;color:#fff}
+.main{display:flex;gap:12px;padding:12px;align-items:flex-start;max-width:1500px;margin:0 auto}
+.plano-wrap{flex:1;min-width:0;overflow-x:auto}
+
+.display-unit{margin:0 auto;filter:drop-shadow(0 4px 20px rgba(0,0,0,.18))}
+.display-header{background:#f5f2ed;border-radius:12px 12px 0 0;padding:10px 14px 6px;text-align:center;border:2px solid #c8b99a;border-bottom:none}
+.display-header .brand{font-size:8px;color:#999;letter-spacing:1px}
+.display-header .title{font-size:18px;font-weight:800;margin:2px 0}.display-header .title span{color:#e53935}
+.red-banner{background:linear-gradient(135deg,#c62828,#e53935);color:#fff;padding:3px 12px;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:11px;letter-spacing:.5px;border-left:2px solid #c8b99a;border-right:2px solid #c8b99a}
+.red-banner .st{font-weight:400;font-size:8px;opacity:.85}
+.shelf-label{background:rgba(0,0,0,.03);border-left:2px solid #c8b99a;border-right:2px solid #c8b99a;padding:2px 8px;font-size:9px;color:#999;display:flex;justify-content:space-between}
+.shelf-label strong{color:#d32f2f}
+
+.shelf-front{position:relative;background:linear-gradient(180deg,#faf8f4,#f5f0e8);border-left:2px solid #c8b99a;border-right:2px solid #c8b99a;overflow:visible;transition:outline .15s}
+.shelf-front.drop-target{outline:3px dashed #e94560;outline-offset:-3px;background:rgba(233,69,96,.04)}
+.shelf-surface{height:5px;background:linear-gradient(to bottom,#c8b99a,#b5a789);border-left:2px solid #c8b99a;border-right:2px solid #c8b99a;position:relative;z-index:100}
+
+.product{position:absolute;bottom:0;border:2px solid;border-radius:2px;overflow:hidden;cursor:grab;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;transition:box-shadow .15s,opacity .15s}
+.product:hover{box-shadow:0 0 0 2px #e94560,0 4px 16px rgba(233,69,96,.35);z-index:500!important}
+.product.dragging{opacity:.25;cursor:grabbing;z-index:600!important;pointer-events:none}
+.product.hidden-product{display:none!important}
+.product.is-back{z-index:5;filter:brightness(.92)}.product.is-front{z-index:15;box-shadow:2px 0 8px rgba(0,0,0,.15)}.product.is-single{z-index:10}
+.product.highlighted{outline:3px solid #e94560;outline-offset:1px;z-index:400!important}
+.product img.pimg{width:100%;height:100%;object-fit:contain;pointer-events:none;padding:1px}
+.product .p-id{position:absolute;bottom:0;left:0;right:0;font-size:6px;font-weight:700;line-height:1;padding:1px 2px;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.depth-badge{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);color:#fff;font-size:8px;font-weight:700;padding:1px 4px;border-radius:8px;line-height:1.2;z-index:20}
+.depth-badge.single{display:none}
+
+/* Ghost element for cross-shelf drag */
+.drag-ghost{position:fixed;pointer-events:none;z-index:9000;opacity:.7;border:2px solid #e94560;border-radius:3px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.9)}
+.drag-ghost img{width:100%;height:100%;object-fit:contain}
+
+.cat-papers{border-color:#E65100;background:rgba(255,248,225,.85)}.cat-papers .p-id{background:#E65100}
+.cat-pipes{border-color:#01579B;background:rgba(225,245,254,.85)}.cat-pipes .p-id{background:#01579B}
+.cat-bulk{border-color:#004D40;background:rgba(224,242,241,.85)}.cat-bulk .p-id{background:#004D40}
+.cat-batteries{border-color:#1B5E20;background:rgba(232,245,233,.85)}.cat-batteries .p-id{background:#1B5E20}
+.cat-accessories{border-color:#4A148C;background:rgba(243,229,245,.85)}.cat-accessories .p-id{background:#4A148C}
+.cat-insert{border-color:#37474F;border-style:dashed;background:rgba(236,239,241,.85)}.cat-insert .p-id{background:#37474F}
+
+.display-footer{background:#f5f2ed;border:2px solid #c8b99a;border-top:none;border-radius:0 0 8px 8px;padding:6px;text-align:center}
+.display-footer .brand{font-size:8px;color:#999;letter-spacing:1px}
+
+/* Sidebar */
+.sidebar{width:320px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 60px);overflow-y:auto}
+.panel{background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #ddd;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.panel h3{font-size:12px;margin-bottom:6px;color:#d32f2f;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.panel h3 .toggle-all{font-size:9px;font-weight:400;color:#888;cursor:pointer;text-decoration:underline}
+.panel h3 .toggle-all:hover{color:#e94560}
+.stat-row{display:flex;justify-content:space-between;padding:2px 0;font-size:10px;border-bottom:1px solid #f0f0f0;color:#555}
+.util-bar{height:5px;background:#eee;border-radius:3px;margin-top:2px;overflow:hidden}
+.util-fill{height:100%;border-radius:3px}
+.u-ok{background:#43A047}.u-warn{background:#FF8F00}.u-over{background:#e53935}
+
+/* Product Index */
+.idx-list{max-height:420px;overflow-y:auto}
+.idx-item{display:flex;align-items:center;gap:6px;padding:3px 4px;border-bottom:1px solid #f5f5f5;font-size:10px;cursor:pointer;border-radius:3px;transition:background .1s}
+.idx-item:hover{background:#f5f0e8}
+.idx-item.idx-hidden{opacity:.4}
+.idx-item .idx-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.idx-item .idx-thumb{width:28px;height:28px;border-radius:2px;border:1px solid #ddd;object-fit:contain;flex-shrink:0;background:#fafafa}
+.idx-item .idx-info{flex:1;min-width:0}
+.idx-item .idx-sku{font-weight:700;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.idx-item .idx-meta{font-size:8px;color:#999}
+.idx-item .idx-shelf{font-size:8px;color:#d32f2f;font-weight:600}
+.idx-eye{width:22px;height:22px;border:none;background:none;cursor:pointer;font-size:14px;flex-shrink:0;border-radius:3px;display:flex;align-items:center;justify-content:center}
+.idx-eye:hover{background:#f0e8e0}
+.idx-filter{width:100%;padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:10px;margin-bottom:6px;outline:none}
+.idx-filter:focus{border-color:#e94560}
+
+.legend-item{display:flex;align-items:center;gap:5px;padding:1px 0;font-size:10px;color:#555}
+.legend-sw{width:10px;height:10px;border-radius:2px;border:2px solid;flex-shrink:0;background:#fff}
+
+#tooltip{display:none;position:fixed;background:#1a1a2e;color:#e0e0e0;border:1px solid #e94560;padding:8px 12px;border-radius:6px;font-size:11px;max-width:300px;z-index:5000;pointer-events:none;line-height:1.4}
+#tooltip.vis{display:block}
+#tooltip .tt-n{font-weight:700;color:#e94560;margin-bottom:2px;font-size:11px}
+#tooltip .tt-d{color:#bbb;font-size:10px;white-space:pre-wrap}
+.cfg-btn{padding:6px 10px;border:2px solid #ddd;border-radius:5px;background:#fff;cursor:pointer;font-size:10px;text-align:left;transition:all .15s;color:#555;font-weight:600}
+.cfg-btn:hover{border-color:#e94560;color:#333}
+.cfg-btn.active{border-color:#d32f2f;background:#fff5f5;color:#d32f2f}
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1a2e;border:1px solid #e94560;color:#fff;padding:8px 16px;border-radius:6px;font-size:12px;z-index:10000;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+@media print{.topbar,.sidebar{display:none}body{background:#fff}.main{padding:0}.display-unit{filter:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Fine Fettle — Smoke Shop in a Box Planogram</h1>
+    <div class="sub">FRONT VIEW &bull; Drag products across shelves &bull; Toggle visibility in Product Index</div>
+  </div>
+  <div class="controls">
+    <button class="btn" onclick="resetAll()">Reset</button>
+    <button class="btn" onclick="dlJSON()">Export JSON</button>
+    <button class="btn pri" onclick="window.print()">Print</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="plano-wrap"><div class="display-unit" id="root"></div></div>
+  <div class="sidebar">
+    <div class="panel">
+      <h3>Preset Configurations</h3>
+      <div id="config-btns" style="display:flex;flex-direction:column;gap:4px"></div>
+      <div id="config-desc" style="font-size:9px;color:#888;margin-top:6px;line-height:1.3"></div>
+    </div>
+    <div class="panel"><h3>Shelf Utilization</h3><div id="stats"></div></div>
+    <div class="panel">
+      <h3>Product Index <span class="toggle-all" onclick="toggleAll()">show/hide all</span></h3>
+      <input class="idx-filter" type="text" placeholder="Search products..." oninput="filterIndex(this.value)">
+      <div class="idx-list" id="idx-list"></div>
+    </div>
+    <div class="panel"><h3>Legend</h3>
+      <div class="legend-item"><div class="legend-sw" style="border-color:#E65100"></div>Papers &amp; Cones</div>
+      <div class="legend-item"><div class="legend-sw" style="border-color:#01579B"></div>Water Pipes</div>
+      <div class="legend-item"><div class="legend-sw" style="border-color:#004D40"></div>Bulk Pipes</div>
+      <div class="legend-item"><div class="legend-sw" style="border-color:#1B5E20"></div>Batteries &amp; Vapes</div>
+      <div class="legend-item"><div class="legend-sw" style="border-color:#4A148C"></div>Accessories</div>
+      <div class="legend-item"><div class="legend-sw" style="border-color:#37474F;border-style:dashed"></div>Display Insert</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="tooltip"><div class="tt-n" id="tt-n"></div><div class="tt-d" id="tt-d"></div></div>
+
+<script>
+const PX=16, SW=27.5, SD=10.5;
+const catColors={papers:'#E65100',pipes:'#01579B',bulk:'#004D40',batteries:'#1B5E20',accessories:'#4A148C',insert:'#37474F'};
+
+function ip(id){
+  const m={'WP-INSERT':'Water Pipes + Display insert (3) copy.png','BAT-INSERT-1':'BT-350VV (1) copy.png',
+    'BAT-INSERT-2':'Ooze HiLo + Display Insert copy.png','BAT-INSERT-3':'YoCan Evolve + Display Insert copy.png',
+    'FL-SB5-HAZMAT':'FL SB5-HAZMAT copy.png','F-420':'F-420 copy.png'};
+  return 'images/'+(m[id]||(id+' copy.png'));
+}
+
+const P={
+  'ZZ114-48':{n:'Zig-Zag 48pk Orange Papers',w:6.3,h:8.5,d:5.7,c:'papers'},
+  'ZZHW-OGP':{n:'Zig-Zag Hemp Wraps OG Purp',w:2.1,h:7,d:5,c:'papers'},
+  'ZZHMP48':{n:'Zig-Zag Organic Hemp Papers',w:6.3,h:8.5,d:5.7,c:'papers'},
+  'ZZUT48':{n:'Zig-Zag Ultra Thin Papers',w:6.3,h:8.5,d:5.7,c:'papers'},
+  'ZZHW-NAT':{n:'Zig-Zag Hemp Wraps Natural',w:2.1,h:7,d:5,c:'papers'},
+  'ZZHW-BD':{n:'Zig-Zag Hemp Wraps Blue Dream',w:2.1,h:7,d:5,c:'papers'},
+  'RAW-CONE6PK':{n:'RAW Classic Cones 6pk',w:5.3,h:11,d:10,c:'papers'},
+  'RAW-BLACKKSLIM':{n:'RAW 50pk Black Papers KS',w:5.3,h:11,d:10,c:'papers'},
+  'RAW-114':{n:'RAW Classic Papers 24ct',w:3.3,h:5.3,d:5.6,c:'papers'},
+  'RAW-BLKCONE3PK':{n:'RAW Black Cones KS 3pk',w:4.5,h:6.2,d:5,c:'papers'},
+  'RAW-TIPSPREROLLED':{n:'RAW Pre-Rolled Tops',w:5,h:5.5,d:4,c:'papers'},
+  'RAW-REGTIP':{n:'RAW Tips Regular 50ct',w:5,h:5.4,d:3.7,c:'papers'},
+  'PC-6PCK-PINK-MC':{n:'Blazy Susan Pink Cones',w:5,h:5.5,d:5.5,c:'papers'},
+  'WP-SG12':{n:'Luvbuds 12" Water Pipe',w:5,h:12,d:4.5,c:'pipes'},
+  'SE-HP-4P85G-BX':{n:'SirEEL 25pc Bulk Pipes',w:9,h:12,d:9,c:'bulk'},
+  'SE-HP-CHILL3-BX':{n:'SirEEL 36pc Chillums',w:9,h:10.6,d:9,c:'bulk'},
+  'HP-SIL-COBB':{n:'LuvBuds Silicone Cobb Pipe',w:1.5,h:1.5,d:4.5,c:'bulk'},
+  'BT-V850D':{n:'Pulsar 510 DL 2.0 PRO',w:4,h:5.5,d:5,c:'batteries'},
+  'LOOK-SH-PRO-PLUS-BK':{n:'Lookah Seahorse Pro Plus',w:3,h:7,d:2,c:'batteries'},
+  'FL-SB5-HAZMAT':{n:'Special Blue 5X Butane',w:2,h:9,d:3.5,c:'accessories'},
+  'F-420':{n:'Formula 420 Cleaner',w:2.2,h:8,d:3,c:'accessories'},
+  'KA-AYR-CLIP-HAZMAT':{n:'AYR CLIPPER Lighter',w:6,h:5,d:3,c:'accessories'},
+  'WP-INSERT':{n:'Water Pipe Display Insert',w:11,h:10,d:2.5,c:'insert',cont:'4 water pipes'},
+  'BAT-INSERT-1':{n:'Battery Insert #1',w:4,h:10.2,d:1.5,c:'insert',cont:'BT-350VV'},
+  'BAT-INSERT-2':{n:'Battery Insert #2',w:3.5,h:10.3,d:1.7,c:'insert',cont:'OOZ-1453'},
+  'BAT-INSERT-3':{n:'Battery Insert #3',w:3,h:10.2,d:2.5,c:'insert',cont:'YOCAN-EVOLVE'},
+};
+
+const SHELVES=[{id:'top',name:'Top Shelf',cl:12},{id:'mid',name:'Middle Shelf',cl:12},{id:'bot',name:'Bottom Shelf',cl:10.5}];
+
+// ================================================================
+//  PRESET CONFIGURATIONS
+//  Total product width = 126.8" across 82.5" of shelf.
+//  "Paired" configs use back/front depth sharing to fit everything.
+//  "Spread" configs show fewer products, each in its own column.
+// ================================================================
+const CONFIGS = {
+  all: {
+    name: 'A: All 29 Products (Paired)',
+    desc: 'Every product on display using depth pairing — back row peeks above front.',
+    layout: {
+      top:[{b:'SE-HP-4P85G-BX',f:'BAT-INSERT-1'},{b:'SE-HP-CHILL3-BX',f:null},{b:'WP-SG12',f:'BAT-INSERT-2'},{b:'RAW-BLKCONE3PK',f:'BT-V850D'}],
+      mid:[{b:'RAW-CONE6PK',f:null},{b:'RAW-BLACKKSLIM',f:null},{b:'ZZHMP48',f:'F-420'},{b:'RAW-114',f:'KA-AYR-CLIP-HAZMAT'},{b:'ZZHW-BD',f:'LOOK-SH-PRO-PLUS-BK'},{b:'HP-SIL-COBB',f:null}],
+      bot:[{b:'WP-INSERT',f:'ZZ114-48'},{b:'ZZUT48',f:'RAW-TIPSPREROLLED'},{b:'PC-6PCK-PINK-MC',f:'RAW-REGTIP'},{b:'BAT-INSERT-3',f:'FL-SB5-HAZMAT'},{b:'ZZHW-OGP',f:'ZZHW-NAT'}],
+    },
+    hidden: [],
+  },
+  spread: {
+    name: 'B: Key Products (No Pairing)',
+    desc: 'Each product gets its own full column — cleaner look, 18 hero items displayed.',
+    layout: {
+      top:[{b:'SE-HP-4P85G-BX',f:null},{b:'SE-HP-CHILL3-BX',f:null},{b:'WP-SG12',f:null},{b:'BAT-INSERT-1',f:null}],
+      mid:[{b:'RAW-CONE6PK',f:null},{b:'RAW-BLACKKSLIM',f:null},{b:'ZZHMP48',f:null},{b:'ZZ114-48',f:null},{b:'FL-SB5-HAZMAT',f:null},{b:'F-420',f:null}],
+      bot:[{b:'WP-INSERT',f:null},{b:'KA-AYR-CLIP-HAZMAT',f:null},{b:'BT-V850D',f:null},{b:'BAT-INSERT-2',f:null},{b:'BAT-INSERT-3',f:null}],
+    },
+    hidden: ['ZZUT48','ZZHW-OGP','ZZHW-NAT','ZZHW-BD','RAW-114','RAW-BLKCONE3PK','RAW-TIPSPREROLLED','RAW-REGTIP','PC-6PCK-PINK-MC','HP-SIL-COBB','LOOK-SH-PRO-PLUS-BK'],
+  },
+  papers: {
+    name: 'C: Papers & Cones Showcase',
+    desc: 'Maximize paper/cone visibility — bulk pipe boxes and some hardware hidden.',
+    layout: {
+      top:[{b:'WP-INSERT',f:null},{b:'WP-SG12',f:null},{b:'BAT-INSERT-1',f:null},{b:'BAT-INSERT-2',f:null},{b:'BAT-INSERT-3',f:null},{b:'LOOK-SH-PRO-PLUS-BK',f:null}],
+      mid:[{b:'RAW-CONE6PK',f:null},{b:'RAW-BLACKKSLIM',f:null},{b:'ZZ114-48',f:null},{b:'ZZHMP48',f:null},{b:'RAW-BLKCONE3PK',f:null}],
+      bot:[{b:'ZZUT48',f:null},{b:'ZZHW-OGP',f:null},{b:'ZZHW-NAT',f:null},{b:'ZZHW-BD',f:null},{b:'RAW-114',f:null},{b:'RAW-TIPSPREROLLED',f:null},{b:'RAW-REGTIP',f:null},{b:'PC-6PCK-PINK-MC',f:null}],
+    },
+    hidden: ['SE-HP-4P85G-BX','SE-HP-CHILL3-BX','HP-SIL-COBB','BT-V850D','KA-AYR-CLIP-HAZMAT','FL-SB5-HAZMAT','F-420'],
+  },
+  hardware: {
+    name: 'D: Hardware & Accessories Focus',
+    desc: 'Pipes, batteries, and accessories front and center — only hero papers kept.',
+    layout: {
+      top:[{b:'SE-HP-4P85G-BX',f:null},{b:'SE-HP-CHILL3-BX',f:null},{b:'WP-SG12',f:null},{b:'WP-INSERT',f:null}],
+      mid:[{b:'BAT-INSERT-1',f:null},{b:'BAT-INSERT-2',f:null},{b:'BAT-INSERT-3',f:null},{b:'BT-V850D',f:null},{b:'LOOK-SH-PRO-PLUS-BK',f:null},{b:'KA-AYR-CLIP-HAZMAT',f:null}],
+      bot:[{b:'RAW-CONE6PK',f:null},{b:'RAW-BLACKKSLIM',f:null},{b:'ZZ114-48',f:null},{b:'FL-SB5-HAZMAT',f:null},{b:'F-420',f:null}],
+    },
+    hidden: ['ZZHMP48','ZZUT48','ZZHW-OGP','ZZHW-NAT','ZZHW-BD','RAW-114','RAW-BLKCONE3PK','RAW-TIPSPREROLLED','RAW-REGTIP','PC-6PCK-PINK-MC','HP-SIL-COBB'],
+  },
+};
+
+let currentConfig = 'all';
+
+// ================================================================
+//  MUTABLE STATE
+// ================================================================
+let state = { layout: null, hidden: new Set() };
+
+function initState(configId) {
+  currentConfig = configId || 'all';
+  const cfg = CONFIGS[currentConfig];
+  state.layout = {};
+  for (const sid of ['top','mid','bot']) {
+    state.layout[sid] = cfg.layout[sid].map(col => ({b:col.b, f:col.f}));
+  }
+  state.hidden = new Set(cfg.hidden);
+}
+
+// Get all product IDs with their shelf + position
+function allPlacements() {
+  const out = [];
+  for (const sid of ['top','mid','bot']) {
+    state.layout[sid].forEach((col,ci) => {
+      out.push({id:col.b, shelf:sid, col:ci, pos:'back'});
+      if (col.f) out.push({id:col.f, shelf:sid, col:ci, pos:'front'});
+    });
+  }
+  return out;
+}
+
+function shelfOfProduct(pid) {
+  for (const sid of ['top','mid','bot']) {
+    for (const col of state.layout[sid]) {
+      if (col.b===pid || col.f===pid) return sid;
+    }
+  }
+  return null;
+}
+
+// ================================================================
+//  RENDER PLANOGRAM
+// ================================================================
+function renderPlano() {
+  const root = document.getElementById('root');
+  root.innerHTML = '';
+  root.style.width = (SW*PX+4)+'px';
+
+  const hdr = document.createElement('div');
+  hdr.className='display-header';
+  hdr.innerHTML='<div class="brand">Powered by LuvBuds</div><div class="title">STUFF <span>FOR</span> YOUR <span>PUFF</span></div>';
+  root.appendChild(hdr);
+
+  SHELVES.forEach((shelf,si) => {
+    if(si===1){const b=document.createElement('div');b.className='red-banner';b.innerHTML='<span>GRAB & GO!</span><span class="st">THE STUFF FOR YOUR PUFF</span>';root.appendChild(b)}
+    if(si===2){const b=document.createElement('div');b.className='red-banner';b.innerHTML='<span>SESSION READY!</span><span class="st">FIND YOUR GEAR HERE</span>';root.appendChild(b)}
+
+    const cols=state.layout[shelf.id];
+
+    // Calculate visible width — skip hidden products, collapse their space
+    let usedW=0;
+    cols.forEach(c=>{
+      const bkHid=state.hidden.has(c.b), frHid=!c.f||state.hidden.has(c.f);
+      const bk=P[c.b], fr=c.f?P[c.f]:null;
+      // Column visible width: depends on which items are showing
+      const visBack=bk&&!bkHid, visFront=fr&&!frHid;
+      if(visBack||visFront){
+        let w=0;
+        if(visBack)w=Math.max(w,bk.w);
+        if(visFront)w=Math.max(w,fr.w);
+        usedW+=w;
+      }
+    });
+
+    const lbl=document.createElement('div');lbl.className='shelf-label';
+    lbl.innerHTML=`<strong>${shelf.name}</strong><span>${shelf.cl}&Prime; cl &bull; ${usedW.toFixed(1)}&Prime;/${SW}&Prime;</span>`;
+    root.appendChild(lbl);
+
+    const area=document.createElement('div');
+    area.className='shelf-front';
+    area.style.width=(SW*PX)+'px';
+    area.style.height=(shelf.cl*PX)+'px';
+    area.dataset.shelf=shelf.id;
+
+    let x=0;
+    cols.forEach(col=>{
+      const bk=P[col.b],fr=col.f?P[col.f]:null;
+      const bkVis=bk&&!state.hidden.has(col.b);
+      const frVis=fr&&!state.hidden.has(col.f);
+
+      // Skip entirely hidden columns
+      if(!bkVis&&!frVis)return;
+
+      // Visible column width
+      let colW=0;
+      if(bkVis)colW=Math.max(colW,bk.w);
+      if(frVis)colW=Math.max(colW,fr.w);
+
+      const bkDeep=fr&&frVis?1:Math.floor(SD/(bk?bk.d:1));
+      if(bkVis) area.appendChild(mkProd(col.b,bk,x,frVis?'is-back':'is-single',bkDeep,shelf.id));
+      if(frVis) area.appendChild(mkProd(col.f,fr,x,bkVis?'is-front':'is-single',1,shelf.id));
+      x+=colW;
+    });
+
+    root.appendChild(area);
+    const lip=document.createElement('div');lip.className='shelf-surface';root.appendChild(lip);
+  });
+
+  const ftr=document.createElement('div');ftr.className='display-footer';ftr.innerHTML='<div class="brand">Powered by LuvBuds</div>';root.appendChild(ftr);
+  updateStats();
+}
+
+function mkProd(id,item,x,cls,deep,shelfId){
+  const el=document.createElement('div');
+  el.className=`product cat-${item.c} ${cls}`;
+  el.style.left=(x*PX)+'px';
+  el.style.width=(item.w*PX)+'px';
+  el.style.height=(item.h*PX)+'px';
+  el.dataset.id=id;
+  el.dataset.shelf=shelfId;
+
+  const img=document.createElement('img');img.className='pimg';img.src=ip(id);img.alt=item.n;img.draggable=false;
+  img.onerror=function(){this.style.display='none';const t=document.createElement('div');t.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;color:#888;text-align:center;padding:2px;line-height:1.1';t.textContent=item.n;el.appendChild(t)};
+  el.appendChild(img);
+
+  const lbl=document.createElement('div');lbl.className='p-id';lbl.textContent=id;el.appendChild(lbl);
+  const badge=document.createElement('div');badge.className='depth-badge'+(deep<=1?' single':'');badge.textContent='\u00d7'+deep;el.appendChild(badge);
+
+  el.addEventListener('pointerenter',e=>{
+    let info=`${item.w}\u2033W \u00d7 ${item.h}\u2033H \u00d7 ${item.d}\u2033D\nDepth: \u00d7${deep} (${item.d}\u2033 per unit)`;
+    if(item.cont)info+='\nContains: '+item.cont;
+    document.getElementById('tt-n').textContent=item.n;
+    document.getElementById('tt-d').textContent=info;
+    document.getElementById('tooltip').classList.add('vis');mvTip(e);
+  });
+  el.addEventListener('pointerleave',()=>document.getElementById('tooltip').classList.remove('vis'));
+  el.addEventListener('pointermove',e=>{if(!dragState)mvTip(e)});
+
+  // Drag start
+  el.addEventListener('pointerdown',e=>{
+    if(e.button)return;e.preventDefault();
+    startDrag(id,item,el,e);
+  });
+
+  return el;
+}
+
+// ================================================================
+//  CROSS-SHELF DRAG
+// ================================================================
+let dragState=null;
+
+function startDrag(id,item,el,e){
+  el.classList.add('dragging');
+  document.getElementById('tooltip').classList.remove('vis');
+
+  // Create ghost
+  const ghost=document.createElement('div');
+  ghost.className='drag-ghost';
+  ghost.style.width=(item.w*PX)+'px';
+  ghost.style.height=(item.h*PX)+'px';
+  const img=document.createElement('img');img.src=ip(id);img.style.cssText='width:100%;height:100%;object-fit:contain';
+  ghost.appendChild(img);
+  document.body.appendChild(ghost);
+
+  dragState={id,item,srcEl:el,ghost,offX:e.clientX-el.getBoundingClientRect().left,offY:e.clientY-el.getBoundingClientRect().top};
+  posGhost(e);
+
+  document.addEventListener('pointermove',onDragMove);
+  document.addEventListener('pointerup',onDragEnd);
+}
+
+function posGhost(e){
+  if(!dragState)return;
+  dragState.ghost.style.left=(e.clientX-dragState.offX)+'px';
+  dragState.ghost.style.top=(e.clientY-dragState.offY)+'px';
+}
+
+function onDragMove(e){
+  if(!dragState)return;
+  posGhost(e);
+  // Highlight target shelf
+  document.querySelectorAll('.shelf-front').forEach(s=>s.classList.remove('drop-target'));
+  const target=getShelfUnder(e);
+  if(target)target.classList.add('drop-target');
+}
+
+function onDragEnd(e){
+  if(!dragState)return;
+  document.removeEventListener('pointermove',onDragMove);
+  document.removeEventListener('pointerup',onDragEnd);
+  document.querySelectorAll('.shelf-front').forEach(s=>s.classList.remove('drop-target'));
+  dragState.ghost.remove();
+  dragState.srcEl.classList.remove('dragging');
+
+  const target=getShelfUnder(e);
+  if(target){
+    const targetShelf=target.dataset.shelf;
+    const rect=target.getBoundingClientRect();
+    const dropX=Math.max(0,(e.clientX-rect.left)/PX);
+
+    // Move product to target shelf at dropX
+    moveProduct(dragState.id, targetShelf, dropX);
+  }
+
+  dragState=null;
+  renderPlano();
+  renderIndex();
+}
+
+function getShelfUnder(e){
+  // Temporarily hide ghost to hit-test
+  if(dragState&&dragState.ghost)dragState.ghost.style.display='none';
+  const el=document.elementFromPoint(e.clientX,e.clientY);
+  if(dragState&&dragState.ghost)dragState.ghost.style.display='';
+  if(!el)return null;
+  const shelf=el.closest('.shelf-front');
+  return shelf;
+}
+
+function moveProduct(pid, targetShelf, dropX){
+  // Remove from current position
+  for(const sid of['top','mid','bot']){
+    state.layout[sid]=state.layout[sid].map(col=>{
+      if(col.b===pid)return{b:col.f||'__empty__',f:null}; // promote front to back
+      if(col.f===pid)return{b:col.b,f:null};
+      return col;
+    }).filter(col=>col.b!=='__empty__');
+  }
+
+  // Insert into target shelf at dropX position
+  const item=P[pid];
+  if(!item)return;
+
+  // Find insertion point based on dropX
+  const cols=state.layout[targetShelf];
+  let x=0, insertIdx=cols.length;
+  for(let i=0;i<cols.length;i++){
+    const bk=P[cols[i].b],fr=cols[i].f?P[cols[i].f]:null;
+    const cw=Math.max(bk.w,fr?fr.w:0);
+    if(dropX<x+cw/2){insertIdx=i;break}
+    x+=cw;
+  }
+
+  // Insert as a new single column
+  cols.splice(insertIdx,0,{b:pid,f:null});
+}
+
+// ================================================================
+//  PRODUCT INDEX
+// ================================================================
+function renderIndex(){
+  const list=document.getElementById('idx-list');
+  list.innerHTML='';
+
+  const placements=allPlacements();
+
+  // Sort: by shelf (top, mid, bot), then by column index
+  const sorted=[...placements].sort((a,b)=>{
+    const so={top:0,mid:1,bot:2};
+    return(so[a.shelf]-so[b.shelf])||a.col-b.col;
+  });
+
+  let lastShelf='';
+  sorted.forEach(pl=>{
+    const item=P[pl.id];if(!item)return;
+    const isHidden=state.hidden.has(pl.id);
+    const shelfName=SHELVES.find(s=>s.id===pl.shelf).name;
+
+    // Shelf divider
+    if(pl.shelf!==lastShelf){
+      lastShelf=pl.shelf;
+      const div=document.createElement('div');
+      div.style.cssText='padding:4px 4px 2px;font-size:9px;font-weight:700;color:#d32f2f;border-bottom:1px solid #eee;margin-top:4px';
+      div.textContent=shelfName;
+      list.appendChild(div);
+    }
+
+    const row=document.createElement('div');
+    row.className='idx-item'+(isHidden?' idx-hidden':'');
+    row.dataset.id=pl.id;
+
+    // Category dot
+    const dot=document.createElement('div');
+    dot.className='idx-dot';
+    dot.style.background=catColors[item.c]||'#999';
+    row.appendChild(dot);
+
+    // Thumbnail
+    const thumb=document.createElement('img');
+    thumb.className='idx-thumb';
+    thumb.src=ip(pl.id);
+    thumb.alt='';
+    thumb.onerror=function(){this.style.display='none'};
+    row.appendChild(thumb);
+
+    // Info
+    const info=document.createElement('div');
+    info.className='idx-info';
+    info.innerHTML=`<div class="idx-sku">${pl.id}</div>
+      <div class="idx-meta">${item.w}\u2033w \u00d7 ${item.h}\u2033h &bull; ${pl.pos}</div>`;
+    row.appendChild(info);
+
+    // Eye toggle
+    const eye=document.createElement('button');
+    eye.className='idx-eye';
+    eye.textContent=isHidden?'\u{1F6AB}':'\u{1F441}';
+    eye.title=isHidden?'Show':'Hide';
+    eye.addEventListener('click',e=>{
+      e.stopPropagation();
+      toggleProduct(pl.id);
+    });
+    row.appendChild(eye);
+
+    // Click to highlight on planogram
+    row.addEventListener('click',()=>highlightProduct(pl.id));
+
+    list.appendChild(row);
+  });
+}
+
+function toggleProduct(pid){
+  if(state.hidden.has(pid))state.hidden.delete(pid);
+  else state.hidden.add(pid);
+  // Full re-render so hidden products release their shelf space
+  renderPlano();
+  renderIndex();
+}
+
+function toggleAll(){
+  const allIds=allPlacements().map(p=>p.id);
+  if(state.hidden.size<allIds.length/2){
+    allIds.forEach(id=>state.hidden.add(id));
+  }else{
+    state.hidden.clear();
+  }
+  renderPlano();renderIndex();
+}
+
+function filterIndex(q){
+  q=q.toLowerCase();
+  document.querySelectorAll('.idx-item').forEach(row=>{
+    const id=row.dataset.id||'';
+    const item=P[id];
+    const text=(id+' '+(item?item.n:'')).toLowerCase();
+    row.style.display=text.includes(q)?'':'none';
+  });
+}
+
+function highlightProduct(pid){
+  document.querySelectorAll('.product.highlighted').forEach(el=>el.classList.remove('highlighted'));
+  document.querySelectorAll(`.product[data-id="${pid}"]`).forEach(el=>{
+    el.classList.add('highlighted');
+    el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    setTimeout(()=>el.classList.remove('highlighted'),2000);
+  });
+}
+
+// ================================================================
+//  STATS
+// ================================================================
+function updateStats(){
+  let html='';
+  SHELVES.forEach(s=>{
+    const cols=state.layout[s.id];let w=0;
+    cols.forEach(c=>{
+      const bk=P[c.b],fr=c.f?P[c.f]:null;
+      const bkVis=bk&&!state.hidden.has(c.b), frVis=fr&&!state.hidden.has(c.f);
+      if(bkVis||frVis){let cw=0;if(bkVis)cw=Math.max(cw,bk.w);if(frVis)cw=Math.max(cw,fr.w);w+=cw}
+    });
+    const pct=w/SW*100;const cls=pct>100?'u-over':pct>90?'u-warn':'u-ok';
+    html+=`<div class="stat-row"><span>${s.name}</span><span>${w.toFixed(1)}&Prime;/${SW}&Prime; (${pct.toFixed(0)}%)</span></div><div class="util-bar"><div class="util-fill ${cls}" style="width:${Math.min(pct,100)}%"></div></div>`;
+  });
+  const total=allPlacements().length;
+  const visible=total-state.hidden.size;
+  html+=`<div class="stat-row" style="margin-top:4px;padding-top:4px;border-top:2px solid #ddd"><span>Visible / Total</span><span>${visible} / ${total}</span></div>`;
+  document.getElementById('stats').innerHTML=html;
+}
+
+// ================================================================
+//  TOOLTIP
+// ================================================================
+function mvTip(e){const t=document.getElementById('tooltip');let x=e.clientX+14,y=e.clientY+14;if(x+300>innerWidth)x=e.clientX-300;if(y+180>innerHeight)y=e.clientY-180;t.style.left=x+'px';t.style.top=y+'px'}
+
+// ================================================================
+//  ACTIONS
+// ================================================================
+function resetAll(){initState(currentConfig);renderPlano();renderIndex();renderConfigs();toast('Reset to '+CONFIGS[currentConfig].name)}
+
+function loadConfig(id){initState(id);renderPlano();renderIndex();renderConfigs();toast('Loaded: '+CONFIGS[id].name)}
+
+function renderConfigs(){
+  const c=document.getElementById('config-btns');c.innerHTML='';
+  for(const[id,cfg]of Object.entries(CONFIGS)){
+    const b=document.createElement('button');b.className='cfg-btn'+(id===currentConfig?' active':'');
+    b.textContent=cfg.name;b.onclick=()=>loadConfig(id);c.appendChild(b);
+  }
+  document.getElementById('config-desc').textContent=CONFIGS[currentConfig].desc;
+}
+
+function dlJSON(){
+  const d={generated:new Date().toISOString(),shelves:SHELVES.map(s=>({name:s.name,clearance:s.cl,
+    columns:state.layout[s.id].map(c=>{const bk=P[c.b],fr=c.f?P[c.f]:null;return{
+      back:{id:c.b,w:bk.w,h:bk.h,d:bk.d},front:fr?{id:c.f,w:fr.w,h:fr.h,d:fr.d}:null,
+      columnWidth:Math.max(bk.w,fr?fr.w:0)}})})),hidden:[...state.hidden]};
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));
+  a.download='planogram.json';a.click();toast('Exported');}
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+// ================================================================
+//  INIT
+// ================================================================
+initState('all');
+renderPlano();
+renderIndex();
+renderConfigs();
+</script>
+</body>
+</html>
